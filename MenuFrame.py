@@ -35,10 +35,9 @@ class MenuFrame(ttk.Frame):
 
         # Experiment name
         ttk.Label(self, text="Experiment Name:").grid(row=6, column=1, columnspan=2)
-        self.experiment_entry = ttk.Entry(self, justify="center")
-        self.experiment_entry.grid(row=7, column=1, columnspan=2, sticky="n")
-        self.experiment_entry.focus_set()
-        self.experiment_entry.insert(0, "W1118_CLKOut_wk2")
+        self.experiment_var = StringVar(value="W1118_CLKOut_wk2")
+        experiment_options = [e for e in sorted(os.listdir(self.controller.experiment_dir)) if e[0] !="."]
+        OptionMenu(self, self.experiment_var, *experiment_options).grid(row=7, column=1, columnspan=2, sticky="n")
 
         # Lamp option
         ttk.Label(self, text="Using Lamp?").grid(row=8, column=1, columnspan=2)
@@ -60,14 +59,14 @@ class MenuFrame(ttk.Frame):
 
     def go(self):
         self.log_message("Starting Analysis:")
-        self.log_message(f"    Experiment Name: {self.experiment_entry.get()}")
+        self.log_message(f"    Experiment Name: {self.experiment_var.get()}")
         self.log_message(f"    Using Lamp: {self.lamp_var.get()}")
         self.log_message("")
 
         # Set experiment variables
-        self.controller.set_experiment_name(os.path.join(self.controller.experiment_dir, self.experiment_entry.get()))
+        self.controller.set_experiment_name(os.path.join(self.controller.experiment_dir, self.experiment_var.get()))
         print("Experiment dir?", self.controller.experiment_name)
-        print(os.path.join(self.controller.experiment_dir, self.experiment_entry.get()))
+        print(os.path.join(self.controller.experiment_dir, self.experiment_var.get()))
         self.controller.set_using_lamp(self.lamp_var.get().strip().capitalize())
         self.controller.set_stats_interval([0, 9]) # Set by default, can change in StatsFrame
 
