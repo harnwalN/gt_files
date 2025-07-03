@@ -223,8 +223,7 @@ class StatisticalAnalysis:
 
         handles, labels = plt.gca().get_legend_handles_labels()
         new_labels = [legend_labels[label] if label in legend_labels else label for label in labels]
-        # plt.legend(handles, new_labels, title="Genotype", bbox_to_anchor=(1.05, 1), loc='upper left')
-        plt.legend(handles, new_labels, title="Genotype", loc='upper left', bbox_to_anchor=(0, 1))
+        plt.legend(handles, new_labels, title="Genotype", loc="lower left", bbox_to_anchor=(0, -0.2), fontsize=7)
 
         if self.data_type == 'velocity':
             plt.axhline(y=0, color='red', linestyle='--')
