@@ -26,7 +26,7 @@ class StatsFrame(ttk.Frame):
         self.grid_columnconfigure([1, 2], weight=4, uniform="a")
         self.grid_columnconfigure([3, 4], weight=3, uniform="a")
         self.grid_columnconfigure([0, 5], weight=2, uniform="a")
-        self.grid_columnconfigure([6], weight=35, uniform="a")
+        self.grid_columnconfigure([6], weight=30, uniform="a")
         self.grid_columnconfigure([7], weight=1, uniform="a")
 
         self.grid_rowconfigure([0, 1, 2, 3, 4, 5, 6, 7], weight=1, uniform="a")
@@ -85,22 +85,20 @@ class StatsFrame(ttk.Frame):
         self.cont_menu.grid(row=4, column=3, columnspan=2)
 
         # Comparison genotype
-        ttk.Label(self, text="Comparison Genotype").grid(row=5, column=1, columnspan=2)
+        ttk.Label(self, text="Comparison Genotype").grid(row=5, column=1, rowspan=2, columnspan=2)
 
-        self.comparison_genotype_var = tk.StringVar(value="--Choose--")
-        comp_options = genotype_options.tolist()
-        comp_options.append("None")
-        self.comp_menu = tk.OptionMenu(self, self.comparison_genotype_var, *comp_options)
-        self.comp_menu.config(anchor="center")
-        self.comp_menu.grid(row=5, column=3, columnspan=2)
+        self.comparison_list = tk.Listbox(self, selectmode=tk.MULTIPLE)
+        for item in genotype_options.tolist():
+            self.comparison_list.insert(tk.END, item)
+        self.comparison_list.grid(row=5, column=3, rowspan=2, columnspan=2)
 
         # Run Button
         self.run_button = ttk.Button(self, text="Run Stats", command=self.run_analysis)
-        self.run_button.grid(row=6, column=1, columnspan=2)
+        self.run_button.grid(row=7, column=1, columnspan=2)
 
         # ZIP Button
         self.zip_button = ttk.Button(self, text="ZIP Results", command=self.zip_folder)
-        self.zip_button.grid(row=6, column=3, columnspan=2)
+        self.zip_button.grid(row=7, column=3, columnspan=2)
 
         # Display plots
         self.i1 = -1
@@ -163,19 +161,25 @@ class StatsFrame(ttk.Frame):
         self.img1_canvas.create_image(0, 0, image=self.resized_tk, anchor="nw")
 
     def run_analysis(self):
+        self.control_genotype = self.control_genotype_var.get()
+        self.comparison_genotypes = [str(self.comparison_list.get(i)) for i in self.comparison_list.curselection()]
         self.log_message("    Running Stats")
         self.log_message(f"        Frame Steps: 30")
         self.log_message(f"        Stats Time Cut: {self.time_cut_start_entry.get()} - {self.time_cut_end_entry.get()}")
+        self.log_message(f"        Control GT: {self.control_genotype}")
+        self.log_message(f"        Comparison GT(s): {self.comparison_genotypes}")
 
         self.controller.frames["MenuFrame"].log_message(f"        Stats Time Cut: {self.time_cut_start_entry.get()} - {self.time_cut_end_entry.get()}")
         self.controller.frames["MenuFrame"].log_message(f"        Frame Steps: 30")
         self.controller.frames["MenuFrame"].log_message(
             f"        Stats Time Cut: {self.time_cut_start_entry.get()} - {self.time_cut_end_entry.get()}")
+        self.controller.frames["MenuFrame"].log_message(f"        Control GT: {self.control_genotype}")
+        self.controller.frames["MenuFrame"].log_message(f"        Comparison GT(s): {self.comparison_genotypes}")
 
         # for fg in self.controller.fin_geo.values():
         #     fg.output_data(frame_step=self.frame_steps_entry.get())
 
-        self.sa[self.gender_var.get()].input_comps(self.control_genotype_var.get(), self.comparison_genotype_var.get())
+        self.sa[self.gender_var.get()].input_comps(self.control_genotype, self.comparison_genotypes)
         messages = self.sa[self.gender_var.get()].run_analysis(self.time_cut_start_entry.get(), self.time_cut_end_entry.get())
         for m in messages:
             self.log_message(m)

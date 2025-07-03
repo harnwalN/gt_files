@@ -90,12 +90,11 @@ class StatisticalAnalysis:
         self.df_long['Subject'] = self.df_long['Genotype'] + '_' + self.df_long['Replicate']
         # print(f"prepare_data -> self.df_long: \n{self.df_long}\n")
 
-    def input_comps(self, control_genotype, comparison_genotype):
+    def input_comps(self, control_genotype, comparison_genotypes):
         self.control_genotype = control_genotype.strip().strip("'").strip('"')
-        comparison_genotype_input = comparison_genotype.strip()
 
         # If no input is given, only control is used
-        if comparison_genotype_input == "None":
+        if "None" in comparison_genotypes and len(comparison_genotypes) == 0:
             print(
                 f"No comparison genotypes provided for {self.gender} {self.data_type}. Skipping statistical analysis.")
             self.messages.append(
@@ -103,10 +102,8 @@ class StatisticalAnalysis:
             self.comparison_genotypes = []
             self.skip_stats = True
         else:
-            parsed = next(csv.reader([comparison_genotype_input], skipinitialspace=True))
-            self.comparison_genotypes = [
-                geno.strip().strip("'").strip('"') for geno in parsed
-            ]
+            if "None" in comparison_genotypes: comparison_genotypes.remove("None")
+            self.comparison_genotypes = comparison_genotypes
             self.skip_stats = False
 
         # Clean up any commas in genotype names
