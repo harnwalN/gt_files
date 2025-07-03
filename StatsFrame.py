@@ -118,7 +118,7 @@ class StatsFrame(ttk.Frame):
     def change_image1(self):
         plots = [
             f"{self.gender}_stats_plot_position.png",
-            f"{self.gender}_stats_plot_velocity.png"
+            f"{self.gender}_stats_plot_velocity.png",
             f"{self.gender}_stats_plot_high performer.png",
             f"{self.gender}_stats_plot_middle performer.png",
             f"{self.gender}_stats_plot_low performer.png",
@@ -138,7 +138,7 @@ class StatsFrame(ttk.Frame):
     def change_image2(self):
         plots = [
             f"{self.gender}_stats_plot_position.png",
-            f"{self.gender}_stats_plot_velocity.png"
+            f"{self.gender}_stats_plot_velocity.png",
             f"{self.gender}_stats_plot_high performer.png",
             f"{self.gender}_stats_plot_middle performer.png",
             f"{self.gender}_stats_plot_low performer.png",
