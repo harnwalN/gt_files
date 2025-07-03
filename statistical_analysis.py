@@ -11,10 +11,11 @@ import re
 
 
 class StatisticalAnalysis:
-    def __init__(self, experiment, gender):
-        self.experiment = experiment
-        self.data_type_list = ['position', 'velocity', 'low performer', 'middle performer', 'high performer'] # Took position out
-        self.base_path = f'./{self.experiment}/'
+    def __init__(self, experiment_path, gender):
+        self.experiment = experiment_path
+        if self.experiment == "": return
+        self.data_type_list = ['position', 'velocity', 'low performer', 'middle performer', 'high performer']
+        self.base_path = experiment_path
         self.gender = gender
         self.gender_folder = '_Output_Males' if self.gender == 'male' else '_Output_Females'
         warnings.filterwarnings('ignore', category=ConvergenceWarning)
@@ -34,11 +35,12 @@ class StatisticalAnalysis:
             print(f"\nProcessing {self.gender} data from {self.start_time}s to {self.filter_time}s...\n")
             self.messages.append(f"\nProcessing {self.gender} data from {self.start_time}s to {self.filter_time}s...\n")
             for data_type in self.data_type_list:
-                if data_type != 'position':
-                    self.data_type = data_type
-                    self.load_data()
-                    self.prepare_data()
-                    self.skip_stats = False # Default to False for non-'position' data
+                self.data_type = data_type
+                self.load_data()
+                self.prepare_data()
+                if self.data_type == 'position':
+                    self.skip_stats = True
+                else: self.skip_stats = False # Default to False for non-'position' data
 
                 self.select_genotypes()
                 if not self.skip_stats:
@@ -63,7 +65,7 @@ class StatisticalAnalysis:
             'middle performer': f'{self.gender}_stats_mp_perc_data.csv',
             'high performer': f'{self.gender}_stats_hp_perc_data.csv'
         }
-        file_path = f'{self.base_path}{self.gender_folder}/{file_map[self.data_type]}'
+        file_path = f'{self.base_path}/{self.gender_folder}/{file_map[self.data_type]}'
         self.df = pd.read_csv(file_path)
         # drop any weird unnamed columns
         self.df = self.df.loc[:, ~self.df.columns.str.startswith('Unnamed: 0.1')]

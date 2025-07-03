@@ -5,6 +5,7 @@ from tkinter import *
 from tkinter import ttk, scrolledtext
 from PIL import Image, ImageTk
 from tqdm import tqdm
+import numpy as np
 
 from MenuFrame import MenuFrame
 from statistical_analysis import StatisticalAnalysis
@@ -16,7 +17,6 @@ class StatsFrame(ttk.Frame):
         self.controller = controller
         # self.add_grid_overlay(10, 8)
 
-        # ------- PERMANENT ------ #
         # Set style
         self.style = ttk.Style()
         self.style.configure("TButton", font=("Segoe UI", 12))
@@ -42,21 +42,16 @@ class StatsFrame(ttk.Frame):
         # Gender option menu
         ttk.Label(self, text="Gender").grid(row=1, column=1, columnspan=2)
 
-        self.gender_var = tk.StringVar(value="--Select--")
-        self.gender_menu = tk.OptionMenu(self, self.gender_var, "male", "female", command=self.init2)
+        self.gender_var = tk.StringVar(value="male")
+        self.gender_menu = tk.OptionMenu(self, self.gender_var, "male", "female", command=self.switch_gender)
         self.gender_menu.config(anchor="center")
         self.gender_menu.grid(row=1, column=3, columnspan=2)
 
-    def init2(self, gender):
-        self.gender = gender
-        self.sa = {
-            "male": StatisticalAnalysis(self.controller.experiment_name, "male"),
-            "female": StatisticalAnalysis(self.controller.experiment_name, "female")
-        }
+        # Assume male at the start
+        self.gender = "male"
 
         # Frame step
-        ttk.Label(self, text="Frame Steps").grid(row=2, column=1, columnspan=2)
-
+        # ttk.Label(self, text="Frame Steps").grid(row=2, column=1, columnspan=2)
         # self.frame_steps_entry = ttk.Entry(self, width=3, justify="center")
         # self.frame_steps_entry.grid(row=2, column=3, columnspan=2)
         # self.frame_steps_entry.focus_set()
@@ -75,12 +70,26 @@ class StatsFrame(ttk.Frame):
         self.time_cut_end_entry.grid(row=3, column=4)
         self.time_cut_end_entry.insert(0, "9")
 
-        genotype_options = self.sa[gender].df_long['Genotype'].unique()
+
+        if self.controller.entered:
+            self.sa = {
+                "male": StatisticalAnalysis(self.controller.experiment_path, "male"),
+                "female": StatisticalAnalysis(self.controller.experiment_path, "female")
+            }
+            self.genotype_options = {
+                "male": self.sa["male"].df_long['Genotype'].unique(),
+                "female": self.sa["female"].df_long['Genotype'].unique()
+            }
+        else:
+            self.genotype_options = {
+                "male": np.array([""], dtype=object),
+                "female": np.array([""], dtype=object)
+            }
         # Control genotype
         ttk.Label(self, text="Control Genotype").grid(row=4, column=1, columnspan=2)
 
         self.control_genotype_var = tk.StringVar(value="--Chose--")
-        self.cont_menu = tk.OptionMenu(self, self.control_genotype_var, *genotype_options)
+        self.cont_menu = tk.OptionMenu(self, self.control_genotype_var, *self.genotype_options[self.gender])
         self.cont_menu.config(anchor="center")
         self.cont_menu.grid(row=4, column=3, columnspan=2)
 
@@ -88,7 +97,7 @@ class StatsFrame(ttk.Frame):
         ttk.Label(self, text="Comparison Genotype").grid(row=5, column=1, rowspan=2, columnspan=2)
 
         self.comparison_list = tk.Listbox(self, selectmode=tk.MULTIPLE)
-        for item in genotype_options.tolist():
+        for item in self.genotype_options[self.gender].tolist():
             self.comparison_list.insert(tk.END, item)
         self.comparison_list.grid(row=5, column=3, rowspan=2, columnspan=2)
 
@@ -101,7 +110,7 @@ class StatsFrame(ttk.Frame):
         self.zip_button.grid(row=7, column=3, columnspan=2)
 
         # Display plots
-        self.i1 = -1
+        self.i1 = 0
         self.img1_canvas = tk.Canvas(self, bd=0, highlightthickness=0, relief="ridge")
         self.img1_canvas.grid(row=0, column=6, rowspan=7, columnspan=1, sticky="nsew")
 
@@ -113,7 +122,12 @@ class StatsFrame(ttk.Frame):
         self.log_area = scrolledtext.ScrolledText(self, state='disabled', bg="#d5b1a9", height=10)
         self.log_area.grid(row=8, column=6, rowspan=2, sticky="ew")
 
-    def change_image1(self):
+    def switch_gender(self, gender):
+        self.gender = gender
+        self.change_image1(no_inc=True)
+
+
+    def change_image1(self, no_inc=False):
         plots = [
             f"{self.gender}_stats_plot_position.png",
             f"{self.gender}_stats_plot_velocity.png",
@@ -121,11 +135,11 @@ class StatsFrame(ttk.Frame):
             f"{self.gender}_stats_plot_middle performer.png",
             f"{self.gender}_stats_plot_low performer.png",
         ]
-        self.i1 += 1
+        if not no_inc: self.i1 += 1
         self.i1 %= len(plots)
 
         self.img1 = Image.open(
-            f"./{self.controller.experiment_name}/_Output_{self.gender.capitalize()}s/{self.sa[self.gender].stats_folder_name}/{plots[self.i1]}")
+            f"{self.controller.experiment_path}/_Output_{self.gender.capitalize()}s/{self.sa[self.gender].stats_folder_name}/{plots[self.i1]}")
 
         # Display plot
         event = tk.Event()
@@ -145,7 +159,7 @@ class StatsFrame(ttk.Frame):
         self.i1 %= len(plots)
 
         self.img1 = Image.open(
-            f"./{self.controller.experiment_name}/_Output_{self.gender.capitalize()}s/{self.sa[self.gender].stats_folder_name}/{plots[self.i1]}")
+            f"{self.controller.experiment_path}/_Output_{self.gender.capitalize()}s/{self.sa[self.gender].stats_folder_name}/{plots[self.i1]}")
 
         # Display plot
         event = tk.Event()
@@ -179,11 +193,21 @@ class StatsFrame(ttk.Frame):
         # for fg in self.controller.fin_geo.values():
         #     fg.output_data(frame_step=self.frame_steps_entry.get())
 
-        self.sa[self.gender_var.get()].input_comps(self.control_genotype, self.comparison_genotypes)
-        messages = self.sa[self.gender_var.get()].run_analysis(self.time_cut_start_entry.get(), self.time_cut_end_entry.get())
-        for m in messages:
+        worked = {"male": False, "female": False}
+        for gender in ["male", "female"]:
+            try:
+                self.sa[gender].input_comps(self.control_genotype, self.comparison_genotypes)
+                worked[gender] = True
+            except Exception:
+                self.log_message("Control/Comparison Genotype not found for " + gender)
+
+        messages1, messages2 = [], []
+        if worked["male"]: messages1 = self.sa["male"].run_analysis(self.time_cut_start_entry.get(), self.time_cut_end_entry.get())
+        if worked["female"]: messages2 = self.sa["female"].run_analysis(self.time_cut_start_entry.get(), self.time_cut_end_entry.get())
+
+        for m in messages1 + messages2:
             self.log_message(m)
-        self.change_image1()
+        self.change_image1(no_inc=True)
         self.img1_canvas.bind("<Configure>", self.stretch_image)
         self.next_button1.grid(row=7, column=6, ipadx=3, ipady=3, sticky="ne")
         self.next_button2.grid(row=7, column=6, ipadx=3, ipady=3, sticky="nw")
@@ -199,8 +223,8 @@ class StatsFrame(ttk.Frame):
         self.controller.show_frame("MenuFrame")
 
     def zip_folder(self):
-        input_folder = f'./{self.controller.experiment_name}/'
-        output_zip_path = f'./{self.controller.experiment_name}_ZIPPED.zip'
+        input_folder = f'{self.controller.experiment_path}/'
+        output_zip_path = f'{self.controller.experiment_path}_ZIPPED.zip'
 
         if not os.path.exists(input_folder):
             self.controller.frames["MenuFrame"].log_message(f"Input folder '{input_folder}' does not exist.")

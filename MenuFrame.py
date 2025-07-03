@@ -1,7 +1,7 @@
 import os
 import tkinter as tk
 from tkinter import *
-from tkinter import ttk, scrolledtext
+from tkinter import ttk, scrolledtext, filedialog
 
 import pandas as pd
 
@@ -31,22 +31,47 @@ class MenuFrame(ttk.Frame):
 
         # Log display
         self.log_area = scrolledtext.ScrolledText(self, state='disabled', bg="#d5b1a9")
-        self.log_area.grid(row=0, column=1, rowspan=6, columnspan=2, sticky="nsew")
+        self.log_area.grid(row=0, column=1, rowspan=5, columnspan=2, sticky="nsew")
+
+        # Configure video folder
+        self.vid_folder_label = ttk.Label(self, text=f"Current Video Folder: {self.controller.experiment_dir}")
+        self.vid_folder_label.grid(row=5, column=1, columnspan=2)
+        self.vid_folder_button = ttk.Button(self, text="Select Folder", command=self.select_dir)
+        self.vid_folder_button.grid(row=6, column=1, columnspan=2)
 
         # Experiment name
-        ttk.Label(self, text="Experiment Name:").grid(row=6, column=1, columnspan=2)
-        self.experiment_var = StringVar(value="W1118_CLKOut_wk2")
+        ttk.Label(self, text="Video Name:").grid(row=7, column=1, columnspan=2)
+        self.experiment_var = StringVar(value=[i for i in sorted(os.listdir(self.controller.experiment_dir)) if i[0] != "."][0])
         experiment_options = [e for e in sorted(os.listdir(self.controller.experiment_dir)) if e[0] !="."]
-        OptionMenu(self, self.experiment_var, *experiment_options).grid(row=7, column=1, columnspan=2, sticky="n")
+        self.experiment_menu = OptionMenu(self, self.experiment_var, *experiment_options)
+        self.experiment_menu.grid(row=8, column=1, columnspan=2, sticky="n")
 
         # Lamp option
-        ttk.Label(self, text="Using Lamp?").grid(row=8, column=1, columnspan=2)
+        ttk.Label(self, text="Using Lamp?").grid(row=9, column=1, columnspan=2)
         self.lamp_var = StringVar(value="Yes")
-        OptionMenu(self, self.lamp_var, "Yes", "No").grid(row=9, column=1, columnspan=2, sticky="n")
+        OptionMenu(self, self.lamp_var, "Yes", "No").grid(row=10, column=1, columnspan=2, sticky="n")
 
         # Enter
         self.go_button = ttk.Button(self, text="Go", command=self.go)
-        self.go_button.grid(row=10, column=1, rowspan=2, columnspan=2)
+        self.go_button.grid(row=11, column=1, rowspan=1, columnspan=2)
+
+    def select_dir(self):
+        self.controller.experiment_dir = filedialog.askdirectory(initialdir=os.getcwd(), title="Choose Video Folder")
+
+        if self.experiment_menu:
+            self.experiment_menu.destroy()
+
+        self.vid_folder_label.config(text=self.controller.experiment_dir)
+
+        experiment_options = [e for e in sorted(os.listdir(self.controller.experiment_dir)) if e[0] != "."]
+        if experiment_options:
+            self.experiment_var.set(experiment_options[0])  # Set to first valid option
+        else:
+            self.experiment_var.set("")
+
+        # Create new menu
+        self.experiment_menu = OptionMenu(self, self.experiment_var, *experiment_options)
+        self.experiment_menu.grid(row=8, column=1, columnspan=2, sticky="n")
 
     def log_message(self, message):
         self.log_area.config(state='normal')
@@ -64,20 +89,20 @@ class MenuFrame(ttk.Frame):
         self.log_message("")
 
         # Set experiment variables
-        self.controller.set_experiment_name(os.path.join(self.controller.experiment_dir, self.experiment_var.get()))
-        print("Experiment dir?", self.controller.experiment_name)
-        print(os.path.join(self.controller.experiment_dir, self.experiment_var.get()))
+        self.controller.experiment_name = self.experiment_var.get()
+        self.controller.experiment_path = os.path.join(self.controller.experiment_dir, self.controller.experiment_name)
         self.controller.set_using_lamp(self.lamp_var.get().strip().capitalize())
         self.controller.set_stats_interval([0, 9]) # Set by default, can change in StatsFrame
+        self.controller.entered = True;
 
         # Run starting analysis
-        spec_video_folders = [d for d in sorted(os.listdir(f"./{self.controller.experiment_name}"))
-                              if os.path.isdir(os.path.join(f"./{self.controller.experiment_name}", d))
+        spec_video_folders = [d for d in sorted(os.listdir(self.controller.experiment_path))
+                              if os.path.isdir(os.path.join(self.controller.experiment_path, d))
                               and d not in ('.ipynb_checkpoints', '_Output_Males', '_Output_Females')]
 
         at_least_one_video = False
         for i, spec_video in enumerate(spec_video_folders, start=1):
-            main_folder_path = f"./{self.controller.experiment_name}/{spec_video}"
+            main_folder_path = f"{self.controller.experiment_path}/{spec_video}"
             safe = self.dissect_video(spec_video, main_folder_path)
             at_least_one_video = at_least_one_video or safe
             if not safe: self.log_message("\n    Skipping " + spec_video)
@@ -87,7 +112,7 @@ class MenuFrame(ttk.Frame):
             return
 
         # ________________DATA_SAVED_AND_PLOTTED________________#
-        analyzer = GenotypeAnalyzer(f"./{self.controller.experiment_name}/")
+        analyzer = GenotypeAnalyzer(self.controller.experiment_path)
         analyzer.run()
 
         self.controller.show_frame("StatsFrame")
@@ -103,7 +128,7 @@ class MenuFrame(ttk.Frame):
         self.create_required_trim_mp4_files(spec_video, main_folder_path)
         self.create_required_trim_output(spec_video, main_folder_path)
 
-        self.controller.fin_geo[spec_video] = FinalizedGeotaxis(experiment=self.controller.experiment_name,
+        self.controller.fin_geo[spec_video] = FinalizedGeotaxis(experiment=self.controller.experiment_path,
                                                  spec_vid=os.path.basename(spec_video),
                                                  fps=60, top_thresh=0.50,
                                                  bottom_thresh=0.55,
@@ -134,8 +159,8 @@ class MenuFrame(ttk.Frame):
                 self.log_message(f"    {video_folder}.h264 has not been converted to .mp4")
                 self.log_message(f"    Creating required main file: {file}")
                 # ______________H264_TO_MP4_________________
-                input_file = f"./{self.controller.experiment_name}/{video_folder}/{video_folder}.h264"
-                output_file = f"./{self.controller.experiment_name}/{video_folder}/{video_folder}.mp4"
+                input_file = f"{self.controller.experiment_path}/{video_folder}/{video_folder}.h264"
+                output_file = f"{self.controller.experiment_path}/{video_folder}/{video_folder}.mp4"
 
                 converter = VideoConverter(input_file, output_file)
                 converter.convert()
@@ -154,7 +179,7 @@ class MenuFrame(ttk.Frame):
                 self.log_message(f"    {file} has not been created")
 
                 # _____________VIDEO_SNIPS__________________
-                video_path = f"./{self.controller.experiment_name}/{video_folder}/{video_folder}.mp4"
+                video_path = f"{self.controller.experiment_path}/{video_folder}/{video_folder}.mp4"
                 self.log_message(f"    Creating Video TRIMS for {video_folder}:")
                 processor = VideoProcessor(video_path)
                 processor.process_video()
@@ -190,36 +215,31 @@ class MenuFrame(ttk.Frame):
                 self.log_message(f"    Missing trimmed video output: {file}")
 
                 # ______________VIAL_NETWORK___________________
-                genotype_csv_pth = f"./{self.controller.experiment_name}/{video_folder}/genotype_metadata.csv"
+                genotype_csv_pth = f"{self.controller.experiment_path}/{video_folder}/genotype_metadata.csv"
                 vials_to_drop, vial_num_list = self.geno_meta(genotype_csv_pth)
 
                 temp = list(range(1, self.vid_clips + 1))
 
-                video_inputs = [f"./{self.controller.experiment_name}/{video_folder}/TRIM_{i}_{video_folder}.mp4"
+                video_inputs = [f"{self.controller.experiment_path}/{video_folder}/TRIM_{i}_{video_folder}.mp4"
                                 for i
                                 in temp]
-                output_files = [
-                    f"./{self.controller.experiment_name}/{video_folder}/{video_folder}_output/TRIM_{i}_{video_folder}_y_positions.csv"
-                    for
-                    i
-                    in temp]
 
                 vial_pos_lists = []
                 self.log_message(f"VIALS USED: \n{vial_num_list}\n VIALS USED LENGTH: {len(vial_num_list)}\n")
 
                 for idx, vid in enumerate(video_inputs, start=1):
                     self.log_message(f"Start Vial Network for {video_folder} TRIM {idx}:")
-                    vial_network = Vial_Network(self.controller.experiment_name, video_folder, idx, vid, vials_to_drop,
+                    vial_network = Vial_Network(self.controller.experiment_path, video_folder, idx, vid, vials_to_drop,
                                                 self.controller.using_lamp)
                     vial_network.predict_and_display()
                     # vial_network.save_model("gt_newVial_nn.pth")
 
-                    vials_input = f"./{self.controller.experiment_name}/{video_folder}/trim_{idx}_{video_folder}_vials_pos.csv"
+                    vials_input = f"{self.controller.experiment_path}/{video_folder}/trim_{idx}_{video_folder}_vials_pos.csv"
                     vial_pos_lists.append(vials_input)
 
                     # ________________GEOTAXIS_MAIN________________#
                     print(f"\n\nRUNNING Video: '{os.path.basename(video_folder)}':\n")
-                    fin_geo = FinalizedGeotaxis(experiment=self.controller.experiment_name,
+                    fin_geo = FinalizedGeotaxis(experiment=self.controller.experiment_path,
                                                  spec_vid=os.path.basename(video_folder),
                                                  fps=60, top_thresh=0.50,
                                                  bottom_thresh=0.55,

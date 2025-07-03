@@ -1,6 +1,5 @@
-# data_parameters.py
-
 import tkinter as tk
+import os
 from tkinter import *
 from tkinter import ttk
 from tkinter import filedialog, scrolledtext
@@ -32,10 +31,12 @@ class Application(tk.Tk):
 
         # Variables used
         self.experiment_name = ""
-        self.experiment_dir = "Experiments"
-        self.using_lamp = ""
+        self.experiment_dir = os.getcwd()
+        self.experiment_path = os.path.join(self.experiment_dir, self.experiment_name)
+        self.using_lamp = "Yes"
         self.frame_steps = 30
         self.stats_interval = [0, 9]
+        self.entered = False
 
         self.genotype_options = []
         self.control_genotype = ""
@@ -63,6 +64,7 @@ class Application(tk.Tk):
 
     def set_experiment_name(self, experiment_name):
         self.experiment_name = experiment_name
+        self.experiment_dir = os.path.join(self.experiment_dir, self.experiment_name)
 
     def set_using_lamp(self, using_lamp):
         self.using_lamp = using_lamp
