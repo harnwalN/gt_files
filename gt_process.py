@@ -11,7 +11,7 @@ class FinalizedGeotaxis:
         self.experiment = experiment
         self.spec_vid = spec_vid
         self.fps = fps
-        self.vid_path = f"./{experiment}/{spec_vid}/"
+        self.vid_path = f"{experiment}/{spec_vid}/"
         self.top_thresh=top_thresh
         self.bottom_thresh=bottom_thresh
         self.thresh_step=5
