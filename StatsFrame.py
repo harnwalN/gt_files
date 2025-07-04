@@ -177,6 +177,12 @@ class StatsFrame(ttk.Frame):
     def run_analysis(self):
         self.control_genotype = self.control_genotype_var.get()
         self.comparison_genotypes = [str(self.comparison_list.get(i)) for i in self.comparison_list.curselection()]
+
+        if self.control_genotype in self.comparison_genotypes:
+            self.log_message(f'Genotype "{self.control_genotype}" cannot be included in control and comparison')
+            self.log_message()
+            return
+
         self.log_message("    Running Stats")
         self.log_message(f"        Frame Steps: 30")
         self.log_message(f"        Stats Time Cut: {self.time_cut_start_entry.get()} - {self.time_cut_end_entry.get()}")
