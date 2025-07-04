@@ -40,7 +40,7 @@ class StatsFrame(ttk.Frame):
         ttk.Label(self, text=f"{self.controller.experiment_name}", font=("Segoe UI", 22)).grid(row=0, column=1, columnspan=4)
 
         # Gender option menu
-        ttk.Label(self, text="Gender").grid(row=1, column=1, columnspan=2)
+        ttk.Label(self, text="Gender", font=("Segoe UI", 14)).grid(row=1, column=1, columnspan=2)
 
         self.gender_var = tk.StringVar(value="male")
         self.gender_menu = tk.OptionMenu(self, self.gender_var, "male", "female", command=self.switch_gender)
@@ -58,13 +58,13 @@ class StatsFrame(ttk.Frame):
         # self.frame_steps_entry.insert(0, "30")
 
         # Stats time cut
-        ttk.Label(self, text="Stats Time Cut").grid(row=3, column=1, columnspan=2)
+        ttk.Label(self, text="Stats Time Cut", font=("Segoe UI", 14)).grid(row=3, column=1, columnspan=2)
 
         self.time_cut_start_entry = ttk.Entry(self, width=3, justify="center")
         self.time_cut_start_entry.grid(row=3, column=3)
         self.time_cut_start_entry.insert(0, "0")
 
-        ttk.Label(self, text="-").grid(row=3, column=3, columnspan=2)
+        ttk.Label(self, text="-", font=("Segoe UI", 14)).grid(row=3, column=3, columnspan=2)
 
         self.time_cut_end_entry = ttk.Entry(self, width=3, justify="center")
         self.time_cut_end_entry.grid(row=3, column=4)
@@ -86,7 +86,7 @@ class StatsFrame(ttk.Frame):
                 "female": np.array([""], dtype=object)
             }
         # Control genotype
-        ttk.Label(self, text="Control Genotype").grid(row=4, column=1, columnspan=2)
+        ttk.Label(self, text="Control Genotype", font=("Segoe UI", 14)).grid(row=4, column=1, columnspan=2)
 
         self.control_genotype_var = tk.StringVar(value="--Chose--")
         self.cont_menu = tk.OptionMenu(self, self.control_genotype_var, *self.genotype_options[self.gender])
@@ -94,7 +94,7 @@ class StatsFrame(ttk.Frame):
         self.cont_menu.grid(row=4, column=3, columnspan=2)
 
         # Comparison genotype
-        ttk.Label(self, text="Comparison Genotype").grid(row=5, column=1, rowspan=2, columnspan=2)
+        ttk.Label(self, text="Comparison Genotype", font=("Segoe UI", 14)).grid(row=5, column=1, rowspan=2, columnspan=2)
 
         self.comparison_list = tk.Listbox(self, selectmode=tk.MULTIPLE)
         for item in self.genotype_options[self.gender].tolist():
