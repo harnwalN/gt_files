@@ -20,40 +20,39 @@ class MenuFrame(ttk.Frame):
 
         # self.add_grid_overlay(12, 4)
 
-        # Set style
-        self.style = ttk.Style()
-        self.style.configure("TButton", font=("Segoe UI", 14), padding=5)
-        self.style.configure("TLabel", font=("Segoe UI", 20), background="#d9d9d9")
-
         # Set up grid
         self.grid_columnconfigure([0, 1, 2, 3], weight=1, uniform="a")
-        self.grid_rowconfigure([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11], weight=1, uniform="a")
+        self.grid_rowconfigure([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], weight=1, uniform="a")
 
         # Log display
         self.log_area = scrolledtext.ScrolledText(self, state='disabled', bg="#d5b1a9")
         self.log_area.grid(row=0, column=1, rowspan=5, columnspan=2, sticky="nsew")
 
+        # Progress bar
+        self.progress = ttk.Progressbar(self, mode='determinate', maximum=1)
+        self.progress.grid(row=5, column=1, columnspan=2, sticky="new")
+
         # Configure video folder
-        self.vid_folder_label = ttk.Label(self, text=f"Current Video Folder: {self.controller.experiment_dir}")
-        self.vid_folder_label.grid(row=5, column=1, columnspan=2)
+        self.vid_folder_label = ttk.Label(self, text=f"Current Video Folder: {self.controller.experiment_dir}", font=("Segoe UI", 16))
+        self.vid_folder_label.grid(row=6, column=1, columnspan=2)
         self.vid_folder_button = ttk.Button(self, text="Select Folder", command=self.select_dir)
-        self.vid_folder_button.grid(row=6, column=1, columnspan=2)
+        self.vid_folder_button.grid(row=7, column=1, columnspan=2)
 
         # Experiment name
-        ttk.Label(self, text="Video Name:").grid(row=7, column=1, columnspan=2)
+        ttk.Label(self, text="Video Name:", font=("Segoe UI", 16)).grid(row=8, column=1, columnspan=2)
         self.experiment_var = StringVar(value=[i for i in sorted(os.listdir(self.controller.experiment_dir)) if i[0] != "."][0])
         experiment_options = [e for e in sorted(os.listdir(self.controller.experiment_dir)) if e[0] !="."]
         self.experiment_menu = OptionMenu(self, self.experiment_var, *experiment_options)
-        self.experiment_menu.grid(row=8, column=1, columnspan=2, sticky="n")
+        self.experiment_menu.grid(row=9, column=1, columnspan=2, sticky="n")
 
         # Lamp option
-        ttk.Label(self, text="Using Lamp?").grid(row=9, column=1, columnspan=2)
+        ttk.Label(self, text="Using Lamp?", font=("Segoe UI", 16)).grid(row=10, column=1, columnspan=2)
         self.lamp_var = StringVar(value="Yes")
-        OptionMenu(self, self.lamp_var, "Yes", "No").grid(row=10, column=1, columnspan=2, sticky="n")
+        OptionMenu(self, self.lamp_var, "Yes", "No").grid(row=11, column=1, columnspan=2, sticky="n")
 
         # Enter
         self.go_button = ttk.Button(self, text="Go", command=self.go)
-        self.go_button.grid(row=11, column=1, rowspan=1, columnspan=2)
+        self.go_button.grid(row=12, column=1, rowspan=1, columnspan=2)
 
     def select_dir(self):
         self.controller.experiment_dir = filedialog.askdirectory(initialdir=os.getcwd(), title="Choose Video Folder")
@@ -71,7 +70,7 @@ class MenuFrame(ttk.Frame):
 
         # Create new menu
         self.experiment_menu = OptionMenu(self, self.experiment_var, *experiment_options)
-        self.experiment_menu.grid(row=8, column=1, columnspan=2, sticky="n")
+        self.experiment_menu.grid(row=9, column=1, columnspan=2, sticky="n")
 
     def log_message(self, message):
         self.log_area.config(state='normal')
@@ -83,6 +82,11 @@ class MenuFrame(ttk.Frame):
         print(message)
 
     def go(self):
+        self.go_button.config(state="disabled")
+        self.progress.start(10)
+
+        self.update_idletasks()
+
         self.log_message("Starting Analysis:")
         self.log_message(f"    Experiment Name: {self.experiment_var.get()}")
         self.log_message(f"    Using Lamp: {self.lamp_var.get()}")
@@ -96,26 +100,45 @@ class MenuFrame(ttk.Frame):
         self.controller.entered = True;
 
         # Run starting analysis
-        spec_video_folders = [d for d in sorted(os.listdir(self.controller.experiment_path))
+        self.spec_video_folders = [d for d in sorted(os.listdir(self.controller.experiment_path))
                               if os.path.isdir(os.path.join(self.controller.experiment_path, d))
                               and d not in ('.ipynb_checkpoints', '_Output_Males', '_Output_Females')]
 
-        at_least_one_video = False
-        for i, spec_video in enumerate(spec_video_folders, start=1):
-            main_folder_path = f"{self.controller.experiment_path}/{spec_video}"
-            safe = self.dissect_video(spec_video, main_folder_path)
-            at_least_one_video = at_least_one_video or safe
-            if not safe: self.log_message("\n    Skipping " + spec_video)
+        self.at_least_one_video = False
+        self.folder_index = 0
+        self.after(100, self.process_next_folder)
 
-        if not at_least_one_video:
-            self.log_message("No valid videos found")
+    def process_next_folder(self):
+        if self.folder_index >= len(self.spec_video_folders):
+            if not self.at_least_one_video:
+                self.log_message("No valid videos found")
+                return
+
+            self.log_message("Analyzing videos...")
+            self.after(100, self.analyze_videos)
             return
 
-        # ________________DATA_SAVED_AND_PLOTTED________________#
+        spec_video = self.spec_video_folders[self.folder_index]
+        self.folder_index += 1
+
+        main_folder_path = os.path.join(self.controller.experiment_path, spec_video)
+        safe = self.dissect_video(spec_video, main_folder_path)
+        self.at_least_one_video = self.at_least_one_video or safe
+        if not safe:
+            self.log_message(f"\n    Skipping {spec_video}")
+
+        # Schedule the next folder processing
+        self.progress["value"] = (self.folder_index-1) / len(self.spec_video_folders)
+        self.after(100, self.process_next_folder)
+
+    def analyze_videos(self):
         analyzer = GenotypeAnalyzer(self.controller.experiment_path)
         analyzer.run()
-
+        self.progress["value"] = 1
+        self.progress.stop()
         self.controller.show_frame("StatsFrame")
+        self.go_button.config(state="normal")
+        return
 
     def dissect_video(self, spec_video, main_folder_path):
         safe = self.check_fatal_files_main(spec_video, main_folder_path)
