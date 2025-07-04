@@ -208,6 +208,8 @@ class StatsFrame(ttk.Frame):
         event.height = self.img1_canvas.winfo_height()
         self.stretch_image(event)
 
+        self.log_message()
+
     def return_to_menu(self):
         self.controller.frames["MenuFrame"].log_message("    Exiting Stats Frame")
         self.controller.show_frame("MenuFrame")
@@ -231,7 +233,7 @@ class StatsFrame(ttk.Frame):
 
         self.controller.frames["MenuFrame"].log_message(f"Folder '{input_folder}' has been zipped to '{output_zip_path}'.")
 
-    def log_message(self, message):
+    def log_message(self, message=""):
         self.log_area.config(state='normal')
         self.log_area.insert(tk.END, message)
         self.log_area.insert(tk.END, "\n")

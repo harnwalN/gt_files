@@ -72,7 +72,7 @@ class MenuFrame(ttk.Frame):
         self.experiment_menu = OptionMenu(self, self.experiment_var, *experiment_options)
         self.experiment_menu.grid(row=9, column=1, columnspan=2, sticky="n")
 
-    def log_message(self, message):
+    def log_message(self, message=""):
         self.log_area.config(state='normal')
         self.log_area.insert(tk.END, message)
         self.log_area.insert(tk.END, "\n")
@@ -90,7 +90,7 @@ class MenuFrame(ttk.Frame):
         self.log_message("Starting Analysis:")
         self.log_message(f"    Experiment Name: {self.experiment_var.get()}")
         self.log_message(f"    Using Lamp: {self.lamp_var.get()}")
-        self.log_message("")
+        self.log_message()
 
         # Set experiment variables
         self.controller.experiment_name = self.experiment_var.get()
@@ -135,6 +135,8 @@ class MenuFrame(ttk.Frame):
         analyzer = GenotypeAnalyzer(self.controller.experiment_path)
         analyzer.run()
         self.progress["value"] = 1
+        self.log_message("Completed analyzing.")
+        self.log_message()
         self.progress.stop()
         self.controller.show_frame("StatsFrame")
         self.go_button.config(state="normal")
