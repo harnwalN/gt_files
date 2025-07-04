@@ -128,7 +128,7 @@ class MenuFrame(ttk.Frame):
             self.log_message(f"\n    Skipping {spec_video}")
 
         # Schedule the next folder processing
-        self.progress["value"] = (self.folder_index-1) / len(self.spec_video_folders)
+        self.progress["value"] = self.folder_index / (len(self.spec_video_folders) + 1)
         self.after(100, self.process_next_folder)
 
     def analyze_videos(self):
