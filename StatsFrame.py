@@ -183,16 +183,6 @@ class StatsFrame(ttk.Frame):
         self.log_message(f"        Control GT: {self.control_genotype}")
         self.log_message(f"        Comparison GT(s): {self.comparison_genotypes}")
 
-        self.controller.frames["MenuFrame"].log_message(f"        Stats Time Cut: {self.time_cut_start_entry.get()} - {self.time_cut_end_entry.get()}")
-        self.controller.frames["MenuFrame"].log_message(f"        Frame Steps: 30")
-        self.controller.frames["MenuFrame"].log_message(
-            f"        Stats Time Cut: {self.time_cut_start_entry.get()} - {self.time_cut_end_entry.get()}")
-        self.controller.frames["MenuFrame"].log_message(f"        Control GT: {self.control_genotype}")
-        self.controller.frames["MenuFrame"].log_message(f"        Comparison GT(s): {self.comparison_genotypes}")
-
-        # for fg in self.controller.fin_geo.values():
-        #     fg.output_data(frame_step=self.frame_steps_entry.get())
-
         worked = {"male": False, "female": False}
         for gender in ["male", "female"]:
             try:
@@ -247,6 +237,7 @@ class StatsFrame(ttk.Frame):
         self.log_area.insert(tk.END, "\n")
         self.log_area.see(tk.END)
         self.log_area.config(state='disabled')
+        self.controller.frames["MenuFrame"].log_message(message)
         self.update_idletasks()
         print(message)
 
