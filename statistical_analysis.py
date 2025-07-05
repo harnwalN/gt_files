@@ -27,13 +27,14 @@ class StatisticalAnalysis:
         self.load_data()
         self.prepare_data()
 
-    def run_analysis(self, start_time, filter_time):
+    def run_analysis(self, start_time, end_time):
         self.messages = []
-        self.filter_time = float(filter_time)
+        self.end_time = float(end_time)
         self.start_time = float(start_time)
+        self.stats_folder_name = f"{self.gender}_stats_con_['{self.control_genotype}']_ctr_{sorted(self.comparison_genotypes)}_time_cut_{self.start_time}s-{self.end_time}s"
         try:
-            print(f"\nProcessing {self.gender} data from {self.start_time}s to {self.filter_time}s...\n")
-            self.messages.append(f"\nProcessing {self.gender} data from {self.start_time}s to {self.filter_time}s...\n")
+            print(f"\nProcessing {self.gender} data from {self.start_time}s to {self.end_time}s...\n")
+            self.messages.append(f"\nProcessing {self.gender} data from {self.start_time}s to {self.end_time}s...\n")
             for data_type in self.data_type_list:
                 self.data_type = data_type
                 self.load_data()
@@ -115,35 +116,13 @@ class StatisticalAnalysis:
         self.control_genotype = clean_map[self.control_genotype]
         self.comparison_genotypes = [clean_map[g] for g in self.comparison_genotypes]
 
-        # --- NEW: determine a unique folder name for this set of stats ---
-        parent_dir = os.path.join(self.base_path, self.gender_folder)
-        base_folder = f"{self.gender}_stats_control_{self.control_genotype}"
-        existing = [
-            d for d in os.listdir(parent_dir)
-            if os.path.isdir(os.path.join(parent_dir, d)) and d.startswith(base_folder)
-        ]
-
-        # Look for any numeric suffix after “base_folder_”
-        highest_suffix = 0
-        pattern = re.compile(rf"^{re.escape(base_folder)}_(\d+)$")
-        for d in existing:
-            m = pattern.match(d)
-            if m:
-                num = int(m.group(1))
-                if num > highest_suffix:
-                    highest_suffix = num
-
-        next_suffix = highest_suffix + 1  # if none found, highest_suffix == 0 → next_suffix = 1
-        self.stats_folder_name = f"{base_folder}_{next_suffix}"  # e.g. “male_stats_control_geno_1_2”
-        # --- END new code ---
-
     def select_genotypes(self):
         self.comb_genos = [self.control_genotype] + self.comparison_genotypes
         self.test_df = self.df_long[self.df_long['Genotype'].isin(self.comb_genos)].copy()
         self.original_df = self.test_df.copy()
         self.test_df = self.test_df.dropna(subset=["Position"]).reset_index(drop=True)
         self.test_df['Time_cat'] = self.test_df['Time'].astype(str)
-        self.test_df = self.test_df[self.test_df['Time'] <= self.filter_time].reset_index(drop=True)
+        self.test_df = self.test_df[self.test_df['Time'] <= self.end_time].reset_index(drop=True)
         self.test_df = self.test_df[self.test_df['Time'] >= self.start_time].reset_index(drop=True)
         self.replicate_counts = self.test_df.groupby('Genotype')['Replicate'].nunique().to_dict()
 
@@ -236,7 +215,7 @@ class StatisticalAnalysis:
             plt.ylabel(f'Climbing {self.data_type.capitalize()} %')
 
         plt.axvline(x=self.start_time, color='black', linestyle='--')
-        plt.axvline(x=self.filter_time, color='black', linestyle='--')
+        plt.axvline(x=self.end_time, color='black', linestyle='--')
         plt.title(
             f"{self.data_type.capitalize()} Trends Over Time With Control {self.control_genotype} for {self.gender.capitalize()}")
         plt.grid(axis='y')
