@@ -138,14 +138,15 @@ class StatsFrame(ttk.Frame):
         if not no_inc: self.i1 += 1
         self.i1 %= len(plots)
 
-        self.img1 = Image.open(
-            f"{self.controller.experiment_path}/_Output_{self.gender.capitalize()}s/{self.sa[self.gender].stats_folder_name}/{plots[self.i1]}")
+        if self.worked[self.gender]:
+            self.img1 = Image.open(
+                f"{self.controller.experiment_path}/_Output_{self.gender.capitalize()}s/{self.sa[self.gender].stats_folder_name}/{plots[self.i1]}")
 
-        # Display plot
-        event = tk.Event()
-        event.width = self.img1_canvas.winfo_width()
-        event.height = self.img1_canvas.winfo_height()
-        self.stretch_image(event)
+            # Display plot
+            event = tk.Event()
+            event.width = self.img1_canvas.winfo_width()
+            event.height = self.img1_canvas.winfo_height()
+            self.stretch_image(event)
 
     def change_image2(self):
         plots = [
@@ -168,11 +169,12 @@ class StatsFrame(ttk.Frame):
         self.stretch_image(event)
 
     def stretch_image(self, event):
-        resized_image = self.img1.resize((event.width, event.height))
-        self.resized_tk = ImageTk.PhotoImage(resized_image)
+        if self.worked[self.gender]:
+            resized_image = self.img1.resize((event.width, event.height))
+            self.resized_tk = ImageTk.PhotoImage(resized_image)
 
-        self.img1_canvas.delete("all")
-        self.img1_canvas.create_image(0, 0, image=self.resized_tk, anchor="nw")
+            self.img1_canvas.delete("all")
+            self.img1_canvas.create_image(0, 0, image=self.resized_tk, anchor="nw")
 
     def run_analysis(self):
         self.control_genotype = self.control_genotype_var.get()
@@ -189,17 +191,17 @@ class StatsFrame(ttk.Frame):
         self.log_message(f"        Control GT: {self.control_genotype}")
         self.log_message(f"        Comparison GT(s): {self.comparison_genotypes}")
 
-        worked = {"male": False, "female": False}
+        self.worked = {"male": False, "female": False}
         for gender in ["male", "female"]:
             try:
                 self.sa[gender].input_comps(self.control_genotype, self.comparison_genotypes)
-                worked[gender] = True
+                self.worked[gender] = True
             except Exception:
                 self.log_message("Control/Comparison Genotype not found for " + gender)
 
         messages1, messages2 = [], []
-        if worked["male"]: messages1 = self.sa["male"].run_analysis(self.time_cut_start_entry.get(), self.time_cut_end_entry.get())
-        if worked["female"]: messages2 = self.sa["female"].run_analysis(self.time_cut_start_entry.get(), self.time_cut_end_entry.get())
+        if self.worked["male"]: messages1 = self.sa["male"].run_analysis(self.time_cut_start_entry.get(), self.time_cut_end_entry.get())
+        if self.worked["female"]: messages2 = self.sa["female"].run_analysis(self.time_cut_start_entry.get(), self.time_cut_end_entry.get())
 
         for m in messages1 + messages2:
             self.log_message(m)
