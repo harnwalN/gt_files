@@ -72,10 +72,16 @@ class MenuFrame(ttk.Frame):
             return
 
         self.experiment_var.set(experiment_options[0])  # Set to first valid option
+        self.print_experiment_name(experiment_options[0])
 
         # Create new menu
-        self.experiment_menu = OptionMenu(self, self.experiment_var, *experiment_options)
+        self.experiment_menu = OptionMenu(self, self.experiment_var, *experiment_options, command=self.print_experiment_name)
         self.experiment_menu.grid(row=9, column=1, columnspan=2, sticky="n")
+
+        self.log_message(f'Experiment Directory set to "{self.controller.experiment_dir}"')
+
+    def print_experiment_name(self, name):
+        self.log_message(f'Experiment Name set to "{name}"')
 
     def log_message(self, message=""):
         self.log_area.config(state='normal')
@@ -92,6 +98,7 @@ class MenuFrame(ttk.Frame):
 
         self.update_idletasks()
 
+        self.log_message("\n++++++++++++++++++")
         self.log_message("Starting Analysis:")
         self.log_message(f"    Experiment Name: {self.experiment_var.get()}")
         self.log_message(f"    Using Lamp: {self.lamp_var.get()}")

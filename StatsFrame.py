@@ -182,7 +182,7 @@ class StatsFrame(ttk.Frame):
             self.log_message(f'Genotype "{self.control_genotype}" cannot be included in control and comparison')
             self.log_message()
             return
-
+        self.log_message("---------------------")
         self.log_message("    Running Stats")
         self.log_message(f"        Frame Steps: 30")
         self.log_message(f"        Stats Time Cut: {self.time_cut_start_entry.get()} - {self.time_cut_end_entry.get()}")
@@ -217,7 +217,7 @@ class StatsFrame(ttk.Frame):
         self.log_message()
 
     def return_to_menu(self):
-        self.controller.frames["MenuFrame"].log_message("    Exiting Stats Frame")
+        self.controller.frames["MenuFrame"].log_message("    Exiting Stats Frame\n")
         self.controller.show_frame("MenuFrame")
 
     def zip_folder(self):

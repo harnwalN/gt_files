@@ -77,7 +77,9 @@ class Application(tk.Tk):
 
     def show_frame(self, page_name):
         if page_name == "MenuFrame":
+            self.frames["MenuFrame"].log_message("\n*************")
             self.frames["MenuFrame"].log_message("Entering Menu")
+            self.frames["MenuFrame"].log_message("*************\n")
             self.frames["MenuFrame"].log_message("Settings reset to default\n")
             self.frame_steps = 30
             self.stats_interval = [0, 9]
@@ -85,6 +87,8 @@ class Application(tk.Tk):
             frame = StatsFrame(self.container, self)
             self.frames["StatsFrame"] = frame
             frame.grid(row=0, column=0, sticky="nsew")
-            self.frames["MenuFrame"].log_message("Entering Stats\n")
+            self.frames["MenuFrame"].log_message("\n**************")
+            self.frames["MenuFrame"].log_message("Entering Stats")
+            self.frames["MenuFrame"].log_message("**************\n")
 
         self.frames[page_name].tkraise()
