@@ -111,12 +111,17 @@ class StatsFrame(ttk.Frame):
 
         # Display plots
         self.i1 = 0
-        self.img1_canvas = tk.Canvas(self, bd=0, highlightthickness=0, relief="ridge")
+        self.img1_canvas = tk.Canvas(self, bd=0, highlightthickness=0, relief="flat")
         self.img1_canvas.grid(row=0, column=6, rowspan=7, columnspan=1, sticky="nsew")
 
         # Next plot button
         self.next_button1 = ttk.Button(self, text=">", command=self.change_image1)
         self.next_button2 = ttk.Button(self, text="<", command=self.change_image2)
+
+        # Plot number indicator
+        self.plot_indicators = [tk.Label(self, bg="#989898", borderwidth=2, relief="ridge") for i in range(5)]
+        for idx, p_i in enumerate(self.plot_indicators):
+            p_i.grid(row=idx, column=7, sticky="nsew")
 
         # Log display
         self.log_area = scrolledtext.ScrolledText(self, state='disabled', bg="#d5b1a9", height=10)
@@ -175,6 +180,10 @@ class StatsFrame(ttk.Frame):
 
             self.img1_canvas.delete("all")
             self.img1_canvas.create_image(0, 0, image=self.resized_tk, anchor="nw")
+
+            for idx, p_i in enumerate(self.plot_indicators):
+                if idx == self.i1: p_i.config(bg="#d5b1a9", relief="solid")
+                else: p_i.config(bg="#989898", relief="ridge")
 
     def run_analysis(self):
         self.control_genotype = self.control_genotype_var.get()
