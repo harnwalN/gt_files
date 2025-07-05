@@ -70,7 +70,7 @@ class Vial_Network:
         irrel_vials_indices = [x - 1 for x in self.irrel_vials]
         vial_df.drop(irrel_vials_indices, axis=0, inplace=True)
 
-        output_csv_path = f'./{self.experiment}/{self.spec_video}/trim_{self.index}_{self.spec_video}_vials_pos.csv'
+        output_csv_path = f'{self.experiment}/{self.spec_video}/trim_{self.index}_{self.spec_video}_vials_pos.csv'
         os.makedirs(os.path.dirname(output_csv_path), exist_ok=True)
         vial_df.to_csv(output_csv_path, index=False)
         print(vial_df)

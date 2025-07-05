@@ -121,6 +121,7 @@ class MenuFrame(ttk.Frame):
         if self.folder_index >= len(self.spec_video_folders):
             if not self.at_least_one_video:
                 self.log_message("No valid videos found")
+                self.progress["value"] = 0
                 self.log_message()
 
                 self.go_button.config(state="normal")
@@ -157,7 +158,6 @@ class MenuFrame(ttk.Frame):
     def dissect_video(self, spec_video, main_folder_path):
         safe = self.check_fatal_files_main(spec_video, main_folder_path)
         if not safe:
-            print(spec_video, "not working")
             return False
 
         self.log_message(f"    Processing video folder: {spec_video}")
@@ -177,7 +177,6 @@ class MenuFrame(ttk.Frame):
         for file in fatal_files_main:
             if not os.path.exists(os.path.join(main_folder_path, file)) and not os.path.exists(os.path.join(main_folder_path, f"{video_folder}.mp4")):
                 self.log_message(f"    FATAL: missing main file {file}.\n")
-                print("FATAL Path", os.path.join(main_folder_path, file))
                 return False
         return True
 
@@ -250,7 +249,7 @@ class MenuFrame(ttk.Frame):
                 self.log_message(f"    Missing trimmed video output: {file}")
 
                 # ______________VIAL_NETWORK___________________
-                genotype_csv_pth = f"{self.controller.experiment_path}/{video_folder}/genotype_metadata.csv"
+                genotype_csv_pth = os.path.join(main_folder_path, "genotype_metadata.csv")
                 vials_to_drop, vial_num_list = self.geno_meta(genotype_csv_pth)
 
                 temp = list(range(1, self.vid_clips + 1))
@@ -260,10 +259,10 @@ class MenuFrame(ttk.Frame):
                                 in temp]
 
                 vial_pos_lists = []
-                self.log_message(f"VIALS USED: \n{vial_num_list}\n VIALS USED LENGTH: {len(vial_num_list)}\n")
+                self.log_message(f"        VIALS USED: \n{vial_num_list}\n VIALS USED LENGTH: {len(vial_num_list)}\n")
 
                 for idx, vid in enumerate(video_inputs, start=1):
-                    self.log_message(f"Start Vial Network for {video_folder} TRIM {idx}:")
+                    self.log_message(f"        Start Vial Network for {video_folder} TRIM {idx}:")
                     vial_network = Vial_Network(self.controller.experiment_path, video_folder, idx, vid, vials_to_drop,
                                                 self.controller.using_lamp)
                     vial_network.predict_and_display()
@@ -273,13 +272,13 @@ class MenuFrame(ttk.Frame):
                     vial_pos_lists.append(vials_input)
 
                     # ________________GEOTAXIS_MAIN________________#
-                    print(f"\n\nRUNNING Video: '{os.path.basename(video_folder)}':\n")
-                    fin_geo = FinalizedGeotaxis(experiment=self.controller.experiment_path,
-                                                 spec_vid=os.path.basename(video_folder),
-                                                 fps=60, top_thresh=0.50,
-                                                 bottom_thresh=0.55,
-                                                 adder_val=150, remove_px=125)
-                    fin_geo.run()
+                self.log_message(f"\n        RUNNING Video: '{os.path.basename(video_folder)}':\n")
+                fin_geo = FinalizedGeotaxis(experiment=self.controller.experiment_path,
+                                             spec_vid=video_folder,
+                                             fps=60, top_thresh=0.50,
+                                             bottom_thresh=0.55,
+                                             adder_val=150, remove_px=125)
+                fin_geo.run()
 
                 return
 
