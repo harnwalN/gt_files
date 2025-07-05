@@ -18,7 +18,7 @@ class MenuFrame(ttk.Frame):
         self.controller = controller
         self.vid_clips = vid_clips
 
-        # self.add_grid_overlay(12, 4)
+        # self.add_grid_overlay(13, 4)
 
         # Set up grid
         self.grid_columnconfigure([0, 1, 2, 3], weight=1, uniform="a")
@@ -40,10 +40,8 @@ class MenuFrame(ttk.Frame):
 
         # Experiment name
         ttk.Label(self, text="Video Name:", font=("Segoe UI", 16)).grid(row=8, column=1, columnspan=2)
-        self.experiment_var = StringVar(value=[i for i in sorted(os.listdir(self.controller.experiment_dir)) if i[0] != "."][0])
-        experiment_options = [e for e in sorted(os.listdir(self.controller.experiment_dir)) if e[0] !="."]
-        self.experiment_menu = OptionMenu(self, self.experiment_var, *experiment_options)
-        self.experiment_menu.grid(row=9, column=1, columnspan=2, sticky="n")
+        self.experiment_var = StringVar(value="")
+        self.select_dir(start=True)
 
         # Lamp option
         ttk.Label(self, text="Using Lamp?", font=("Segoe UI", 16)).grid(row=10, column=1, columnspan=2)
@@ -54,19 +52,26 @@ class MenuFrame(ttk.Frame):
         self.go_button = ttk.Button(self, text="Go", command=self.go)
         self.go_button.grid(row=12, column=1, rowspan=1, columnspan=2)
 
-    def select_dir(self):
-        self.controller.experiment_dir = filedialog.askdirectory(initialdir=os.getcwd(), title="Choose Video Folder")
+    def select_dir(self, start=False):
+        if not start:
+            self.controller.experiment_dir = filedialog.askdirectory(initialdir=os.getcwd(), title="Choose Experiment Folder")
 
-        if self.experiment_menu:
-            self.experiment_menu.destroy()
+            if self.experiment_menu:
+                self.experiment_menu.destroy()
 
         self.vid_folder_label.config(text=self.controller.experiment_dir)
 
-        experiment_options = [e for e in sorted(os.listdir(self.controller.experiment_dir)) if e[0] != "."]
-        if experiment_options:
-            self.experiment_var.set(experiment_options[0])  # Set to first valid option
-        else:
+        try:
+            experiment_options = [e for e in sorted(os.listdir(self.controller.experiment_dir)) if e[0] != "." and os.path.isdir(os.path.join(self.controller.experiment_dir, e))]
+            if len(experiment_options) == 0:
+                self.log_message("Please choose directory containing video folders")
+                return
+        except Exception:
             self.experiment_var.set("")
+            self.log_message("Choose valid directory")
+            return
+
+        self.experiment_var.set(experiment_options[0])  # Set to first valid option
 
         # Create new menu
         self.experiment_menu = OptionMenu(self, self.experiment_var, *experiment_options)
@@ -100,6 +105,10 @@ class MenuFrame(ttk.Frame):
         self.controller.entered = True;
 
         # Run starting analysis
+        if not os.path.isdir(self.controller.experiment_path):
+            raise self.log_message(f'Experiment path is not a directory: "{self.controller.experiment_path}"')
+            return
+
         self.spec_video_folders = [d for d in sorted(os.listdir(self.controller.experiment_path))
                               if os.path.isdir(os.path.join(self.controller.experiment_path, d))
                               and d not in ('.ipynb_checkpoints', '_Output_Males', '_Output_Females')]
@@ -112,6 +121,9 @@ class MenuFrame(ttk.Frame):
         if self.folder_index >= len(self.spec_video_folders):
             if not self.at_least_one_video:
                 self.log_message("No valid videos found")
+                self.log_message()
+
+                self.go_button.config(state="normal")
                 return
 
             self.log_message("Analyzing videos...")
@@ -153,12 +165,6 @@ class MenuFrame(ttk.Frame):
         self.create_required_trim_mp4_files(spec_video, main_folder_path)
         self.create_required_trim_output(spec_video, main_folder_path)
 
-        self.controller.fin_geo[spec_video] = FinalizedGeotaxis(experiment=self.controller.experiment_path,
-                                                 spec_vid=os.path.basename(spec_video),
-                                                 fps=60, top_thresh=0.50,
-                                                 bottom_thresh=0.55,
-                                                 adder_val=150, remove_px=125)
-
         self.log_message(f"    All required files found for {spec_video}.")
 
         return True
@@ -190,7 +196,9 @@ class MenuFrame(ttk.Frame):
                 converter = VideoConverter(input_file, output_file)
                 converter.convert()
                 del input_file, output_file
-                self.log_message("")
+                self.log_message()
+
+                return
 
     def create_required_trim_mp4_files(self, video_folder, main_folder_path):
         required_trim_mp4_files = [
@@ -215,6 +223,8 @@ class MenuFrame(ttk.Frame):
                     start_frame = processor.frame_ranges_df.iloc[trim_cnt - 1]['start_frame']
                     end_frame = processor.frame_ranges_df.iloc[trim_cnt - 1]['end_frame']
                     processor.crop_video(start_frame, end_frame, trim_cnt)
+
+                return
 
     def create_required_trim_output(self, video_folder, main_folder_path):
         required_trim_csv_files = [
@@ -270,6 +280,8 @@ class MenuFrame(ttk.Frame):
                                                  bottom_thresh=0.55,
                                                  adder_val=150, remove_px=125)
                     fin_geo.run()
+
+                return
 
     def geno_meta(self, genotype_csv_input, n=12):
         geno_df = pd.read_csv(genotype_csv_input)
