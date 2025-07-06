@@ -1,19 +1,12 @@
 import tkinter as tk
-import os
-from tkinter import *
 from tkinter import ttk
-from tkinter import filedialog, scrolledtext
-import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
-import csv
+from tkinter import *
 
 from MenuFrame import MenuFrame
 from StatsFrame import StatsFrame
-from gt_process import FinalizedGeotaxis
 from statistical_analysis import *
 
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+import os
 
 class Application(tk.Tk):
     def __init__(self):
