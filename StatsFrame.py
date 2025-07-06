@@ -7,7 +7,6 @@ from PIL import Image, ImageTk
 from tqdm import tqdm
 import numpy as np
 
-from MenuFrame import MenuFrame
 from statistical_analysis import StatisticalAnalysis
 
 
@@ -88,7 +87,7 @@ class StatsFrame(ttk.Frame):
         # Control genotype
         ttk.Label(self, text="Control Genotype", font=("Segoe UI", 14)).grid(row=4, column=1, columnspan=2)
 
-        self.control_genotype_var = tk.StringVar(value="--Chose--")
+        self.control_genotype_var = tk.StringVar(value="--Choose--")
         self.cont_menu = tk.OptionMenu(self, self.control_genotype_var, *self.genotype_options[self.gender])
         self.cont_menu.config(anchor="center")
         self.cont_menu.grid(row=4, column=3, columnspan=2)
@@ -133,12 +132,14 @@ class StatsFrame(ttk.Frame):
 
 
     def change_image1(self, no_inc=False):
+        if self.control_genotype_var.get() == "--Choose--":
+            return
         plots = [
             f"{self.gender}_stats_plot_position.png",
             f"{self.gender}_stats_plot_velocity.png",
             f"{self.gender}_stats_plot_high performer.png",
             f"{self.gender}_stats_plot_middle performer.png",
-            f"{self.gender}_stats_plot_low performer.png",
+            f"{self.gender}_stats_plot_low performer.png"
         ]
         if not no_inc: self.i1 += 1
         self.i1 %= len(plots)
@@ -159,7 +160,7 @@ class StatsFrame(ttk.Frame):
             f"{self.gender}_stats_plot_velocity.png",
             f"{self.gender}_stats_plot_high performer.png",
             f"{self.gender}_stats_plot_middle performer.png",
-            f"{self.gender}_stats_plot_low performer.png",
+            f"{self.gender}_stats_plot_low performer.png"
         ]
         self.i1 -= 1
         self.i1 %= len(plots)
